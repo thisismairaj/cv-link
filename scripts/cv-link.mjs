@@ -3,7 +3,7 @@
 //   CV_LINK_URL=https://cv-link.<you>.workers.dev CV_LINK_ADMIN_KEY=... node scripts/cv-link.mjs <command>
 // Commands:
 //   add "<label>" [cv]   create a link for one person (cv = a key in RESUMES, e.g. data), prints its URL
-//   sent <id>       mark the link as sent now (opens in the next 60 seconds count as automatic)
+//   sent <id>       mark the link as sent now (opens in the next 15 seconds count as automatic)
 //   delete <id>     remove a link and its opens (e.g. a test link)
 //   stats           opens per link
 

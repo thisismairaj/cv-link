@@ -19,7 +19,8 @@ links to build previews. cv-link keeps those opens but marks them, with the reas
 
 - a `HEAD` request, or no user agent;
 - a user agent from a scanner or preview fetcher (Barracuda, Mimecast, Proofpoint, Slack, ...);
-- an open within 60 seconds of you marking the link as sent.
+- an open within 15 seconds of you marking the link as sent. (It was 60; a real reader on a
+  phone clicked 50 seconds after sending in a test, so the window is short on purpose.)
 
 `stats` shows opens by people and automatic opens separately. Treat an open as a signal of
 interest, not proof that someone read the whole thing: a forwarded email can also be opened by

@@ -21,8 +21,9 @@ test('scanners, previews, HEAD requests and instant clicks are marked, with a re
   for (const ua of ['Slackbot-LinkExpanding 1.0', 'python-requests/2.32', 'Mozilla/5.0 (compatible; Barracuda Sentinel)', 'WhatsApp/2.23', 'curl/8.4']) {
     assert.equal(botReason('GET', ua, null), 'scanner or preview user agent', ua)
   }
-  assert.equal(botReason('GET', chrome, 12), 'clicked 12s after sending')
-  assert.equal(botReason('GET', chrome, 61), null)
+  assert.equal(botReason('GET', chrome, 5), 'clicked 5s after sending')
+  assert.equal(botReason('GET', chrome, 50), null) // a quick reader, from a real test
+  assert.equal(botReason('GET', chrome, 16), null)
 })
 
 test('visitor hash is stable, salted and does not contain the IP', async () => {

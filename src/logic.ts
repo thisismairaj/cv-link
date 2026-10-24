@@ -16,8 +16,9 @@ export function isValidId(id: string): boolean {
 // Email security gateways and link-preview fetchers open links before (or instead of) a person.
 const BOT_UA = /bot|crawl|spider|preview|scan|safelinks|proofpoint|mimecast|barracuda|symantec|trendmicro|fireeye|forcepoint|sophos|python-requests|curl|wget|go-http|httpclient|okhttp|headless|phantom|slack|whatsapp|telegram|discord|facebookexternalhit|skypeuripreview|google-?inspection|microsoft office|ms-office|outlook-?(ios|android)?-?link/i
 
-/** Seconds after "sent" in which a click is almost surely an automatic scan, not a reader. */
-export const FAST_CLICK_SECONDS = 60
+/** Seconds after "sent" in which a click is almost surely an automatic scan. 15, not 60: a live
+ * test (2026-10-24) had a real person on Android click 50s after sending. */
+export const FAST_CLICK_SECONDS = 15
 
 /**
  * Why a click looks automatic, or null if it looks like a person. Never deletes anything:
