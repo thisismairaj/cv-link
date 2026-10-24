@@ -2,10 +2,13 @@
 
 Give each person you send your resume to their own link, and see who opened it.
 
-A small Cloudflare Worker. `https://cv-link.<you>.workers.dev/r/<id>` logs the open and sends
+A small Cloudflare Worker. `https://cv.<you>.workers.dev/acme-k3f9` logs the open and sends
 the visitor on to your resume (a Google Drive link, a PDF, anything with a URL). One link per
 person means an open tells you who it was. Have more than one resume (say, data and backend)?
 Each link remembers which one it sends. Runs on Cloudflare's free tier, no domain needed.
+
+Links read like `https://cv.<you>.workers.dev/acme-k3f9`: the company name from the label (or a
+`slug` you pass), plus 4 random characters so one company's link doesn't reveal another's.
 
 ## Why not a UTM tag or Drive's own stats?
 
@@ -45,13 +48,13 @@ npm run db:remote                     # creates the tables
 npx wrangler secret put RESUMES       # JSON: {"data":"<share link>","backend":"<share link>"}
 npx wrangler secret put ADMIN_KEY     # a long random string, used by the CLI
 npx wrangler secret put HASH_SALT     # another random string
-npm run deploy                        # prints https://cv-link.<you>.workers.dev
+npm run deploy                        # prints https://cv.<you>.workers.dev
 ```
 
 ## Use
 
 ```
-export CV_LINK_URL=https://cv-link.<you>.workers.dev
+export CV_LINK_URL=https://cv.<you>.workers.dev
 export CV_LINK_ADMIN_KEY=<the ADMIN_KEY you set>
 
 npm run cv -- add "Acme, Head of Data" data   # prints the link for that one email (data resume)
@@ -73,8 +76,8 @@ list one, else the first entry. An unknown key is refused when you create the li
 
 All `/api/*` routes need `Authorization: Bearer <ADMIN_KEY>`.
 
-- `GET /r/<id>`: logs the open, `302` to that link's resume. Unknown ids get a plain `404`.
-- `POST /api/links` with `{"label": "...", "cv": "data"}` (`cv` optional): creates a link,
+- `GET /<id>` (and the older `/r/<id>`): logs the open, `302` to that link's resume. Unknown ids get a plain `404`.
+- `POST /api/links` with `{"label": "...", "cv": "data", "slug": "acme"}` (`cv`, `slug` optional): creates a link,
   returns `{id, label, cv, url}`.
 - `POST /api/links/<id>/sent`: records the send time.
 - `DELETE /api/links/<id>`: removes the link and its opens.

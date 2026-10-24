@@ -48,18 +48,23 @@ async function click(request: Request, env: Bindings, ctx: ExecutionContext, id:
 }
 
 async function addLink(request: Request, env: Bindings): Promise<Response> {
-  const body = (await request.json().catch(() => ({}))) as { label?: unknown; cv?: unknown }
+  const body = (await request.json().catch(() => ({}))) as { label?: unknown; cv?: unknown; slug?: unknown }
   const label = typeof body.label === 'string' ? body.label.trim() : ''
   if (!label || label.length > 200) return json({ error: 'label is required (1-200 characters)' }, 400)
   const resumes = parseResumes(env.RESUMES)
   const cv = typeof body.cv === 'string' && body.cv ? body.cv : null
   // Refuse an unknown key now, so a typo doesn't quietly send someone the wrong resume later.
   if (cv && !(cv in resumes)) return json({ error: `unknown cv "${cv}"; known: ${Object.keys(resumes).join(', ') || 'none'}` }, 400)
-  const id = newId()
-  await env.DB.prepare('INSERT INTO links (id, label, created_at, cv) VALUES (?, ?, ?, ?)')
-    .bind(id, label, new Date().toISOString(), cv)
-    .run()
-  return json({ id, label, cv, url: `${new URL(request.url).origin}/r/${id}` }, 201)
+  // The readable part comes from "slug" if given (e.g. the draft file name), else from the label.
+  const name = typeof body.slug === 'string' && body.slug ? body.slug : label
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const id = newId(name)
+    const inserted = await env.DB.prepare('INSERT OR IGNORE INTO links (id, label, created_at, cv) VALUES (?, ?, ?, ?)')
+      .bind(id, label, new Date().toISOString(), cv)
+      .run()
+    if (inserted.meta.changes) return json({ id, label, cv, url: `${new URL(request.url).origin}/${id}` }, 201)
+  }
+  return json({ error: 'could not find a free id, try again' }, 503)
 }
 
 async function markSent(env: Bindings, id: string): Promise<Response> {

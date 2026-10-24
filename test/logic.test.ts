@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { botReason, hashVisitor, isValidId, newId, parseResumes, parseRoute, pickResume, safeEqual } from '../src/logic.ts'
+import { botReason, hashVisitor, isValidId, newId, parseResumes, parseRoute, pickResume, safeEqual, slugify } from '../src/logic.ts'
 
 test('newId is 10 readable characters and different each time', () => {
   const ids = new Set(Array.from({ length: 1000 }, () => newId()))
@@ -41,6 +41,9 @@ test('safeEqual', () => {
 
 test('routes', () => {
   assert.deepEqual(parseRoute('GET', '/r/abcdef2345'), { kind: 'click', id: 'abcdef2345' })
+  assert.deepEqual(parseRoute('GET', '/trackerbot-k3f9'), { kind: 'click', id: 'trackerbot-k3f9' })
+  assert.deepEqual(parseRoute('GET', '/favicon.ico'), { kind: 'notFound' })
+  assert.deepEqual(parseRoute('GET', '/api'), { kind: 'notFound' })
   assert.deepEqual(parseRoute('HEAD', '/r/abcdef2345'), { kind: 'click', id: 'abcdef2345' })
   assert.deepEqual(parseRoute('GET', '/r/../etc'), { kind: 'notFound' })
   assert.deepEqual(parseRoute('GET', '/r/ABC'), { kind: 'notFound' })
@@ -67,4 +70,17 @@ test('pickResume: the link\'s own cv, then "default", then the first listed', ()
   assert.equal(pickResume(r, null), 'https://d')
   assert.equal(pickResume({ ...r, default: 'https://x' }, 'missing'), 'https://x')
   assert.equal(pickResume({}, 'data'), undefined)
+})
+
+test('readable ids: a slug from the name plus 4 random characters', () => {
+  assert.equal(slugify('Acme Corp, Head of Data'), 'acme-corp')
+  assert.equal(slugify('Zürich Labs (CTO)'), 'zurich-labs')
+  assert.equal(slugify('trackerbot'), 'trackerbot')
+  assert.equal(slugify('!!!'), '')
+  assert.equal(slugify('a very long company name that keeps going'), 'a-very-long-company-name')
+  const id = newId('Trackerbot, CTO')
+  assert.match(id, /^trackerbot-[a-z2-9]{4}$/)
+  assert.ok(isValidId(id))
+  assert.notEqual(newId('Trackerbot'), newId('Trackerbot'))
+  assert.equal(newId('!!!').length, 10) // nothing readable: falls back to a random id
 })

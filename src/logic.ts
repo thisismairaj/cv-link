@@ -3,14 +3,35 @@
 // Lowercase letters and digits without look-alikes (0/o, 1/l/i), so an id can be read aloud.
 const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789'
 
-/** A random link id, 10 characters (~49 bits): long enough that nobody guesses a live link. */
-export function newId(length = 10): string {
+function randomPart(length: number): string {
   const bytes = crypto.getRandomValues(new Uint8Array(length))
   return Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('')
 }
 
+/** "Acme Corp, Head of Data" -> "acme-corp": the part before a comma or bracket, as a URL slug. */
+export function slugify(text: string): string {
+  return text
+    .split(/[,(]/)[0]
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '') // drop accents: "zürich" -> "zurich"
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 24)
+    .replace(/-+$/, '')
+}
+
+/**
+ * A link id. With a name it reads like "acme-k3f9": readable, plus 4 random characters so one
+ * company's link doesn't reveal another's. Without a name it is 10 random characters (~49 bits).
+ */
+export function newId(name = ''): string {
+  const slug = slugify(name)
+  return slug ? `${slug}-${randomPart(4)}` : randomPart(10)
+}
+
 export function isValidId(id: string): boolean {
-  return /^[a-z2-9]{6,32}$/.test(id)
+  return /^[a-z0-9](?:[a-z0-9-]{4,38}[a-z0-9])$/.test(id)
 }
 
 // Email security gateways and link-preview fetchers open links before (or instead of) a person.
@@ -63,8 +84,10 @@ export type Route =
 
 export function parseRoute(method: string, pathname: string): Route {
   const parts = pathname.split('/').filter(Boolean)
-  if ((method === 'GET' || method === 'HEAD') && parts.length === 2 && parts[0] === 'r' && isValidId(parts[1])) {
-    return { kind: 'click', id: parts[1] }
+  if (method === 'GET' || method === 'HEAD') {
+    // "/acme-k3f9" (current links) and "/r/<id>" (links made before readable ids)
+    if (parts.length === 1 && parts[0] !== 'api' && isValidId(parts[0])) return { kind: 'click', id: parts[0] }
+    if (parts.length === 2 && parts[0] === 'r' && isValidId(parts[1])) return { kind: 'click', id: parts[1] }
   }
   if (parts[0] === 'api') {
     if (method === 'POST' && parts.length === 2 && parts[1] === 'links') return { kind: 'addLink' }
