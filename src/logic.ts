@@ -73,3 +73,29 @@ export function parseRoute(method: string, pathname: string): Route {
   }
   return { kind: 'notFound' }
 }
+
+/**
+ * The RESUMES secret: a JSON object from a short key to a resume URL, e.g.
+ * {"data": "https://drive.google.com/...", "backend": "https://drive.google.com/..."}.
+ * Bad JSON or non-http(s) values are dropped, so a typo can't redirect anywhere odd.
+ */
+export function parseResumes(raw: string | undefined): Record<string, string> {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw ?? '')
+  } catch {
+    return {}
+  }
+  const out: Record<string, string> = {}
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    for (const [key, value] of Object.entries(parsed)) {
+      if (/^[a-z0-9-]{1,20}$/.test(key) && typeof value === 'string' && /^https?:\/\//.test(value)) out[key] = value
+    }
+  }
+  return out
+}
+
+/** The URL for a link's resume: its own key, else "default", else the first one listed. */
+export function pickResume(resumes: Record<string, string>, cv: string | null): string | undefined {
+  return (cv ? resumes[cv] : undefined) ?? resumes.default ?? Object.values(resumes)[0]
+}

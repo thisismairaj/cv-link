@@ -13,6 +13,6 @@
       "migrations_dir": "migrations"
     }
   ]
-  // Secrets (never in this file): RESUME_URL, ADMIN_KEY, HASH_SALT.
+  // Secrets (never in this file): RESUMES (JSON of key -> resume URL), ADMIN_KEY, HASH_SALT.
   // Set them with `npx wrangler secret put <NAME>`; for `wrangler dev`, put them in .dev.vars.
 }

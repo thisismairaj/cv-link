@@ -2,13 +2,13 @@
 // Small CLI for your cv-link Worker.
 //   CV_LINK_URL=https://cv-link.<you>.workers.dev CV_LINK_ADMIN_KEY=... node scripts/cv-link.mjs <command>
 // Commands:
-//   add "<label>"   create a link for one person, prints its URL
+//   add "<label>" [cv]   create a link for one person (cv = a key in RESUMES, e.g. data), prints its URL
 //   sent <id>       mark the link as sent now (opens in the next 60 seconds count as automatic)
 //   stats           opens per link
 
 const base = (process.env.CV_LINK_URL ?? '').replace(/\/$/, '')
 const key = process.env.CV_LINK_ADMIN_KEY ?? ''
-const [command, arg] = process.argv.slice(2)
+const [command, arg, arg2] = process.argv.slice(2)
 
 if (!base || !key) {
   console.error('Set CV_LINK_URL and CV_LINK_ADMIN_KEY first.')
@@ -30,8 +30,8 @@ async function call(method, path, body) {
 }
 
 if (command === 'add' && arg) {
-  const link = await call('POST', '/api/links', { label: arg })
-  console.log(`${link.url}   (${link.label})`)
+  const link = await call('POST', '/api/links', { label: arg, cv: arg2 })
+  console.log(`${link.url}   (${link.label}${link.cv ? `, ${link.cv} cv` : ''})`)
 } else if (command === 'sent' && arg) {
   await call('POST', `/api/links/${arg}/sent`)
   console.log(`Marked ${arg} as sent.`)
@@ -41,9 +41,9 @@ if (command === 'add' && arg) {
   for (const r of rows) {
     const opened = r.opens ? `opened ${r.opens}x by ${r.visitors} visitor(s), first ${r.first_open}, last ${r.last_open}` : 'not opened'
     const auto = r.automatic_opens ? `, ${r.automatic_opens} automatic` : ''
-    console.log(`${r.id}  ${r.label}\n    sent ${r.sent_at ?? 'not marked'}; ${opened}${auto}`)
+    console.log(`${r.id}  ${r.label}${r.cv ? ` [${r.cv} cv]` : ''}\n    sent ${r.sent_at ?? 'not marked'}; ${opened}${auto}`)
   }
 } else {
-  console.log('Usage: cv-link.mjs add "<label>" | sent <id> | stats')
+  console.log('Usage: cv-link.mjs add "<label>" [cv] | sent <id> | stats')
   process.exit(command ? 1 : 0)
 }

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { botReason, hashVisitor, isValidId, newId, parseRoute, safeEqual } from '../src/logic.ts'
+import { botReason, hashVisitor, isValidId, newId, parseResumes, parseRoute, pickResume, safeEqual } from '../src/logic.ts'
 
 test('newId is 10 readable characters and different each time', () => {
   const ids = new Set(Array.from({ length: 1000 }, () => newId()))
@@ -48,4 +48,20 @@ test('routes', () => {
   assert.deepEqual(parseRoute('GET', '/api/stats'), { kind: 'stats' })
   assert.deepEqual(parseRoute('GET', '/api/links'), { kind: 'notFound' })
   assert.deepEqual(parseRoute('GET', '/'), { kind: 'notFound' })
+})
+
+test('RESUMES secret: keeps valid keys and http(s) URLs only', () => {
+  const r = parseResumes('{"data":"https://drive.google.com/a","backend":"https://drive.google.com/b","Bad Key":"https://x","js":"javascript:alert(1)"}')
+  assert.deepEqual(r, { data: 'https://drive.google.com/a', backend: 'https://drive.google.com/b' })
+  assert.deepEqual(parseResumes('not json'), {})
+  assert.deepEqual(parseResumes(undefined), {})
+  assert.deepEqual(parseResumes('["https://x"]'), {})
+})
+
+test('pickResume: the link\'s own cv, then "default", then the first listed', () => {
+  const r = { data: 'https://d', backend: 'https://b' }
+  assert.equal(pickResume(r, 'backend'), 'https://b')
+  assert.equal(pickResume(r, null), 'https://d')
+  assert.equal(pickResume({ ...r, default: 'https://x' }, 'missing'), 'https://x')
+  assert.equal(pickResume({}, 'data'), undefined)
 })
