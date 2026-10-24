@@ -67,6 +67,15 @@ async function markSent(env: Bindings, id: string): Promise<Response> {
   return result.meta.changes ? json({ id, sent: true }) : json({ error: 'no such link' }, 404)
 }
 
+async function deleteLink(env: Bindings, id: string): Promise<Response> {
+  // Clicks first, then the link, in one batch, so a link is never left half deleted.
+  const [, link] = await env.DB.batch([
+    env.DB.prepare('DELETE FROM clicks WHERE link_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM links WHERE id = ?').bind(id),
+  ])
+  return link.meta.changes ? json({ id, deleted: true }) : json({ error: 'no such link' }, 404)
+}
+
 async function stats(env: Bindings): Promise<Response> {
   const { results } = await env.DB.prepare(
     `SELECT l.id, l.label, l.cv, l.sent_at,
@@ -89,6 +98,7 @@ export default {
     if (!authorized(request, env)) return json({ error: 'unauthorized' }, 401)
     if (route.kind === 'addLink') return addLink(request, env)
     if (route.kind === 'markSent') return markSent(env, route.id)
+    if (route.kind === 'deleteLink') return deleteLink(env, route.id)
     return stats(env)
   },
 } satisfies ExportedHandler<Bindings>

@@ -4,6 +4,7 @@
 // Commands:
 //   add "<label>" [cv]   create a link for one person (cv = a key in RESUMES, e.g. data), prints its URL
 //   sent <id>       mark the link as sent now (opens in the next 60 seconds count as automatic)
+//   delete <id>     remove a link and its opens (e.g. a test link)
 //   stats           opens per link
 
 const base = (process.env.CV_LINK_URL ?? '').replace(/\/$/, '')
@@ -35,6 +36,9 @@ if (command === 'add' && arg) {
 } else if (command === 'sent' && arg) {
   await call('POST', `/api/links/${arg}/sent`)
   console.log(`Marked ${arg} as sent.`)
+} else if (command === 'delete' && arg) {
+  await call('DELETE', `/api/links/${arg}`)
+  console.log(`Deleted ${arg} and its opens.`)
 } else if (command === 'stats') {
   const rows = await call('GET', '/api/stats')
   if (!rows.length) console.log('No links yet.')
@@ -44,6 +48,6 @@ if (command === 'add' && arg) {
     console.log(`${r.id}  ${r.label}${r.cv ? ` [${r.cv} cv]` : ''}\n    sent ${r.sent_at ?? 'not marked'}; ${opened}${auto}`)
   }
 } else {
-  console.log('Usage: cv-link.mjs add "<label>" [cv] | sent <id> | stats')
+  console.log('Usage: cv-link.mjs add "<label>" [cv] | sent <id> | delete <id> | stats')
   process.exit(command ? 1 : 0)
 }

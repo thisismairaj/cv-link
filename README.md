@@ -56,6 +56,7 @@ export CV_LINK_ADMIN_KEY=<the ADMIN_KEY you set>
 npm run cv -- add "Acme, Head of Data" data   # prints the link for that one email (data resume)
 npm run cv -- sent <id>                    # right after sending
 npm run cv -- stats
+npm run cv -- delete <id>                  # remove a link and its opens (e.g. a test)
 ```
 
 ```
@@ -75,6 +76,7 @@ All `/api/*` routes need `Authorization: Bearer <ADMIN_KEY>`.
 - `POST /api/links` with `{"label": "...", "cv": "data"}` (`cv` optional): creates a link,
   returns `{id, label, cv, url}`.
 - `POST /api/links/<id>/sent`: records the send time.
+- `DELETE /api/links/<id>`: removes the link and its opens.
 - `GET /api/stats`: one row per link.
 
 ## Development

@@ -56,6 +56,7 @@ export type Route =
   | { kind: 'click'; id: string }
   | { kind: 'addLink' }
   | { kind: 'markSent'; id: string }
+  | { kind: 'deleteLink'; id: string }
   | { kind: 'stats' }
   | { kind: 'notFound' }
 
@@ -68,6 +69,9 @@ export function parseRoute(method: string, pathname: string): Route {
     if (method === 'POST' && parts.length === 2 && parts[1] === 'links') return { kind: 'addLink' }
     if (method === 'POST' && parts.length === 4 && parts[1] === 'links' && parts[3] === 'sent' && isValidId(parts[2])) {
       return { kind: 'markSent', id: parts[2] }
+    }
+    if (method === 'DELETE' && parts.length === 3 && parts[1] === 'links' && isValidId(parts[2])) {
+      return { kind: 'deleteLink', id: parts[2] }
     }
     if (method === 'GET' && parts.length === 2 && parts[1] === 'stats') return { kind: 'stats' }
   }

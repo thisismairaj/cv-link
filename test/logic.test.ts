@@ -46,6 +46,8 @@ test('routes', () => {
   assert.deepEqual(parseRoute('POST', '/api/links'), { kind: 'addLink' })
   assert.deepEqual(parseRoute('POST', '/api/links/abcdef2345/sent'), { kind: 'markSent', id: 'abcdef2345' })
   assert.deepEqual(parseRoute('GET', '/api/stats'), { kind: 'stats' })
+  assert.deepEqual(parseRoute('DELETE', '/api/links/abcdef2345'), { kind: 'deleteLink', id: 'abcdef2345' })
+  assert.deepEqual(parseRoute('DELETE', '/api/links'), { kind: 'notFound' })
   assert.deepEqual(parseRoute('GET', '/api/links'), { kind: 'notFound' })
   assert.deepEqual(parseRoute('GET', '/'), { kind: 'notFound' })
 })
