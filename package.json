@@ -1,0 +1,36 @@
+{
+  "name": "cv-link",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A Cloudflare Worker that gives each person their own link to your resume and tells you who opened it, with scanner clicks marked.",
+  "license": "MIT",
+  "author": {
+    "name": "thisismairaj",
+    "url": "https://github.com/thisismairaj"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"test/*.test.ts\"",
+    "typecheck": "wrangler types && tsc --noEmit",
+    "dev": "wrangler dev",
+    "db:local": "wrangler d1 migrations apply cv-link --local",
+    "db:remote": "wrangler d1 migrations apply cv-link --remote",
+    "deploy": "wrangler deploy",
+    "cv": "node scripts/cv-link.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "wrangler": "^4.140.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thisismairaj/cv-link.git"
+  },
+  "allowScripts": {
+    "workerd@1.20261019.1": true,
+    "esbuild@0.28.2": true
+  }
+}

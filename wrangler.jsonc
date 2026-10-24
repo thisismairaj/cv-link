@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cv-link",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-01",
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cv-link",
+      // Replace with the id printed by `npx wrangler d1 create cv-link`.
+      "database_id": "REPLACE-WITH-YOUR-D1-DATABASE-ID",
+      "migrations_dir": "migrations"
+    }
+  ]
+  // Secrets (never in this file): RESUME_URL, ADMIN_KEY, HASH_SALT.
+  // Set them with `npx wrangler secret put <NAME>`; for `wrangler dev`, put them in .dev.vars.
+}
