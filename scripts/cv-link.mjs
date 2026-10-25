@@ -40,14 +40,55 @@ if (command === 'add' && arg) {
   await call('DELETE', `/api/links/${arg}`)
   console.log(`Deleted ${arg} and its opens.`)
 } else if (command === 'stats') {
-  const rows = await call('GET', '/api/stats')
-  if (!rows.length) console.log('No links yet.')
-  for (const r of rows) {
-    const opened = r.opens ? `opened ${r.opens}x by ${r.visitors} visitor(s), first ${r.first_open}, last ${r.last_open}` : 'not opened'
-    const auto = r.automatic_opens ? `, ${r.automatic_opens} automatic` : ''
-    console.log(`${r.id}  ${r.label}${r.cv ? ` [${r.cv} cv]` : ''}\n    sent ${r.sent_at ?? 'not marked'}; ${opened}${auto}`)
-  }
+  printStats(await call('GET', '/api/stats'))
 } else {
   console.log('Usage: cv-link.mjs add "<label>" [cv] | sent <id> | delete <id> | stats')
   process.exit(command ? 1 : 0)
+}
+
+// Opened links first, then unopened, as aligned columns with local times.
+function printStats(rows) {
+  if (!rows.length) return console.log('No links yet.')
+  const color = process.stdout.isTTY && !process.env.NO_COLOR
+  const paint = (code, s) => (color ? `\x1b[${code}m${s}\x1b[0m` : s)
+  const opened = rows.filter((r) => r.opens)
+  const waiting = rows.filter((r) => !r.opens)
+  const people = opened.reduce((n, r) => n + r.visitors, 0)
+  const automatic = rows.reduce((n, r) => n + (r.automatic_opens ?? 0), 0)
+
+  console.log(paint('1', `\n${opened.length} of ${rows.length} links opened`) + ` (${plural(people, 'person', 'people')})`)
+  const head = ['', 'Link', 'Recipient', 'CV', 'Sent', 'Opens', 'People', 'Last open', 'Auto']
+  const body = [...opened, ...waiting].map((r) => [
+    r.opens ? '✔' : '·', r.id, recipient(r), r.cv ?? '', when(r.sent_at),
+    String(r.opens ?? 0), String(r.visitors ?? 0), r.opens ? when(r.last_open) : '', r.automatic_opens ? String(r.automatic_opens) : '',
+  ])
+  const widths = head.map((h, i) => Math.max(h.length, ...body.map((l) => l[i].length)))
+  const line = (l, r, m) => l + widths.map((w) => '─'.repeat(w + 2)).join(m) + r
+  const row = (cells) => '│' + cells.map((c, i) => ` ${c.padEnd(widths[i])} `).join('│') + '│'
+  console.log(line('┌', '┐', '┬'))
+  console.log(paint('1', row(head)))
+  console.log(line('├', '┤', '┼'))
+  for (const [i, l] of body.entries()) console.log(i < opened.length ? paint('32', row(l)) : row(l))
+  console.log(line('└', '┘', '┴'))
+  if (automatic) console.log(paint('2', `Auto = opens not counted (mail scanners, link previews, clicks within 15 s of sending).`))
+  console.log()
+}
+
+// Drop the "(draft-name)" the email script adds, since the id already shows it.
+function recipient(r) {
+  const slug = r.id.replace(/-[^-]+$/, '')
+  return r.label.endsWith(` (${slug})`) ? r.label.slice(0, -slug.length - 3) : r.label
+}
+
+function when(iso) {
+  if (!iso) return 'not marked'
+  const d = new Date(iso)
+  const stamp = d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  const mins = Math.round((Date.now() - d) / 60000)
+  const ago = mins < 60 ? `${mins}m` : mins < 2880 ? `${Math.round(mins / 60)}h` : `${Math.round(mins / 1440)}d`
+  return `${stamp} (${ago} ago)`
+}
+
+function plural(n, one, many = one + 's') {
+  return `${n} ${n === 1 ? one : many}`
 }
